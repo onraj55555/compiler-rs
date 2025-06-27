@@ -4,7 +4,7 @@ use std::{
     io::{BufRead, BufReader},
 };
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Clone)]
 pub enum TokenType {
     Id(String),
     Num(String),
@@ -31,42 +31,68 @@ pub enum TokenType {
     While,
     For,
     Return,
-    Int,
+    I8,
+    I16,
+    I32,
+    I64,
+    U8,
+    U16,
+    U32,
+    U64,
     Void,
+    Fn,
+    Colon,
+    Arrow,
+    End,
+    Comma,
+    Let,
     Invalid,
 }
 
 impl Debug for TokenType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let t = match self {
-            TokenType::Semi => format!(";"),
-            TokenType::Rcur => format!("}}"),
-            TokenType::Lcur => format!("{{"),
-            TokenType::Lang => format!("["),
-            TokenType::Rang => format!("]"),
-            TokenType::Lbra => format!("("),
-            TokenType::Rbra => format!(")"),
-            TokenType::Lt => format!("<"),
-            TokenType::Lteq => format!("<="),
-            TokenType::Gt => format!(">"),
-            TokenType::Gteq => format!(">="),
-            TokenType::Eq => format!("="),
-            TokenType::Eqeq => format!("=="),
-            TokenType::Plus => format!("+"),
-            TokenType::Min => format!("-"),
-            TokenType::Mul => format!("*"),
-            TokenType::Div => format!("/"),
-            TokenType::Mod => format!("%"),
-            TokenType::Id(id) => format!("id:{}", id),
-            TokenType::Num(num) => format!("num:{}", num),
-            TokenType::If => format!("if"),
-            TokenType::Else => format!("else"),
-            TokenType::While => format!("while"),
-            TokenType::For => format!("for"),
-            TokenType::Return => format!("ret"),
-            TokenType::Int => format!("int"),
-            TokenType::Void => format!("void"),
+            TokenType::Semi => format!("SEMI"),
+            TokenType::Rcur => format!("RCUR"),
+            TokenType::Lcur => format!("LCUR"),
+            TokenType::Lang => format!("LANG"),
+            TokenType::Rang => format!("RANG"),
+            TokenType::Lbra => format!("LBRA"),
+            TokenType::Rbra => format!("RBRA"),
+            TokenType::Lt => format!("LT"),
+            TokenType::Lteq => format!("LTEQ"),
+            TokenType::Gt => format!("GT"),
+            TokenType::Gteq => format!("GTEQ"),
+            TokenType::Eq => format!("EQ"),
+            TokenType::Eqeq => format!("EQEQ"),
+            TokenType::Plus => format!("PLUS"),
+            TokenType::Min => format!("MIN"),
+            TokenType::Mul => format!("MUL"),
+            TokenType::Div => format!("DIV"),
+            TokenType::Mod => format!("MOD"),
+            TokenType::Id(id) => format!("ID:{}", id),
+            TokenType::Num(num) => format!("NUM:{}", num),
+            TokenType::If => format!("IF"),
+            TokenType::Else => format!("ELSE"),
+            TokenType::While => format!("WHILE"),
+            TokenType::For => format!("FOR"),
+            TokenType::Return => format!("RET"),
+            TokenType::Void => format!("VOID"),
             TokenType::Invalid => format!("INVALID"),
+            TokenType::Fn => format!("FN"),
+            TokenType::Colon => format!("COLON"),
+            TokenType::Arrow => format!("ARROW"),
+            TokenType::End => format!("END"),
+            TokenType::Comma => format!("COMMA"),
+            TokenType::Let => format!("LET"),
+            TokenType::I8 => format!("i8"),
+            TokenType::I16 => format!("i16"),
+            TokenType::I32 => format!("i32"),
+            TokenType::I64 => format!("i64"),
+            TokenType::U8 => format!("u8"),
+            TokenType::U16 => format!("u16"),
+            TokenType::U32 => format!("u32"),
+            TokenType::U64 => format!("u64"),
         };
         write!(f, "{}", t)
     }
@@ -82,18 +108,8 @@ impl Debug for Token {
     }
 }
 
-/*
-impl PartialEq for Token {
-    fn eq(&self, other: &Self) -> bool {
-        self.line_nr == other.line_nr
-            && self.line_index == other.line_index
-            && self.token_type == other.token_type
-    }
-}
-*/
-
-#[derive(PartialEq)]
-struct Token {
+#[derive(PartialEq, Clone)]
+pub struct Token {
     token_type: TokenType,
     line_nr: usize,
     line_index: usize,
@@ -107,11 +123,32 @@ impl Token {
             line_index,
         }
     }
+
+    pub fn get_type(&self) -> &TokenType {
+        &self.token_type
+    }
+
+    pub fn get_line_nr(&self) -> usize {
+        self.line_nr
+    }
+
+    pub fn get_line_index(&self) -> usize {
+        self.line_index
+    }
 }
 
 pub struct Lexer {
     path: String,
     tokens: Vec<Token>,
+}
+
+impl Debug for Lexer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for token in &self.tokens {
+            write!(f, "{:?}", token).unwrap();
+        }
+        write!(f, "\n")
+    }
 }
 
 impl Lexer {
@@ -132,10 +169,11 @@ impl Lexer {
                 self.tokens.push(token);
             }
         }
+        self.tokens.push(Token::new(TokenType::End, 0, 0));
     }
 
-    pub fn get_tokens(&self) -> &Vec<Token> {
-        &self.tokens
+    pub fn get_tokens(&mut self) -> Vec<Token> {
+        self.tokens.clone()
     }
 
     fn tokenise_line(line: &str, line_nr: usize) -> Vec<Token> {
@@ -189,9 +227,26 @@ impl Lexer {
                 index = i;
                 i += 1;
             } else if c == '-' {
-                token_type = TokenType::Min;
-                index = i;
-                i += 1;
+                let c = line.chars().nth(i + 1);
+
+                match c {
+                    Some(c) => {
+                        if c == '>' {
+                            token_type = TokenType::Arrow;
+                            index = i;
+                            i += 2;
+                        } else {
+                            token_type = TokenType::Min;
+                            index = i;
+                            i += 1;
+                        }
+                    }
+                    None => {
+                        token_type = TokenType::Min;
+                        index = i;
+                        i += 1;
+                    }
+                }
             } else if c == '*' {
                 token_type = TokenType::Mul;
                 index = i;
@@ -281,6 +336,14 @@ impl Lexer {
                         }
                     }
                 }
+            } else if c == ':' {
+                token_type = TokenType::Colon;
+                index = i;
+                i += 1;
+            } else if c == ',' {
+                token_type = TokenType::Comma;
+                index = i;
+                i += 1;
             }
             // Identifier
             else if c.is_alphabetic() || c == '_' {
@@ -309,12 +372,30 @@ impl Lexer {
                     token_type = TokenType::While;
                 } else if "for" == &id {
                     token_type = TokenType::For;
-                } else if "int" == &id {
-                    token_type = TokenType::Int;
+                } else if "i8" == &id {
+                    token_type = TokenType::I8;
+                } else if "i16" == &id {
+                    token_type = TokenType::I16;
+                } else if "i32" == &id {
+                    token_type = TokenType::I32;
+                } else if "i64" == &id {
+                    token_type = TokenType::I64;
+                } else if "u8" == &id {
+                    token_type = TokenType::U8;
+                } else if "u16" == &id {
+                    token_type = TokenType::U16;
+                } else if "u32" == &id {
+                    token_type = TokenType::U32;
+                } else if "u64" == &id {
+                    token_type = TokenType::U64;
                 } else if "void" == &id {
                     token_type = TokenType::Void;
                 } else if "return" == &id {
                     token_type = TokenType::Return;
+                } else if "let" == &id {
+                    token_type = TokenType::Let;
+                } else if "fn" == &id {
+                    token_type = TokenType::Fn;
                 } else {
                     token_type = TokenType::Id(id);
                 }
@@ -358,10 +439,10 @@ mod test {
     fn file_1dotc() {
         let path = "test_files/1.c";
         let result = vec![
-            Token::new(TokenType::Int, 0, 0),
+            Token::new(TokenType::I32, 0, 0),
             Token::new(TokenType::Id(String::from("double")), 0, 4),
             Token::new(TokenType::Lbra, 0, 10),
-            Token::new(TokenType::Int, 0, 11),
+            Token::new(TokenType::I32, 0, 11),
             Token::new(TokenType::Id(String::from("v")), 0, 15),
             Token::new(TokenType::Rbra, 0, 16),
             Token::new(TokenType::Lcur, 0, 18),
