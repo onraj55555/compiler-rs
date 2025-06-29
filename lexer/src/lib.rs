@@ -98,6 +98,54 @@ impl Debug for TokenType {
     }
 }
 
+impl TokenType {
+    pub fn debug_type(&self) -> String {
+        match self {
+            TokenType::Id(_) => String::from("identifier"),
+            TokenType::Num(_) => String::from("literal"),
+            TokenType::Plus => String::from("operator"),
+            TokenType::Min => String::from("operator"),
+            TokenType::Mul => String::from("operator"),
+            TokenType::Div => String::from("operator"),
+            TokenType::Mod => String::from("operator"),
+            TokenType::Eq => String::from("operator"),
+            TokenType::Eqeq => String::from("operator"),
+            TokenType::Lt => String::from("operator"),
+            TokenType::Lteq => String::from("operator"),
+            TokenType::Gt => String::from("operator"),
+            TokenType::Gteq => String::from("operator"),
+            TokenType::Lbra => String::from("open bracket"),
+            TokenType::Rbra => String::from("close bracket"),
+            TokenType::Lang => String::from("open angle bracket"),
+            TokenType::Rang => String::from("close angle bracket"),
+            TokenType::Lcur => String::from("open brace"),
+            TokenType::Rcur => String::from("close brace"),
+            TokenType::Semi => String::from("semicolon"),
+            TokenType::If => String::from("if"),
+            TokenType::Else => String::from("else"),
+            TokenType::While => String::from("while"),
+            TokenType::For => String::from("for"),
+            TokenType::Return => String::from("return"),
+            TokenType::I8 => String::from("type"),
+            TokenType::I16 => String::from("type"),
+            TokenType::I32 => String::from("type"),
+            TokenType::I64 => String::from("type"),
+            TokenType::U8 => String::from("type"),
+            TokenType::U16 => String::from("type"),
+            TokenType::U32 => String::from("type"),
+            TokenType::U64 => String::from("type"),
+            TokenType::Void => String::from("type"),
+            TokenType::Fn => String::from("fn"),
+            TokenType::Colon => String::from("colon"),
+            TokenType::Arrow => String::from("arrow"),
+            TokenType::End => String::from("EOF"),
+            TokenType::Comma => String::from("comma"),
+            TokenType::Let => String::from("let"),
+            TokenType::Invalid => String::from("INVALID"),
+        }
+    }
+}
+
 impl Debug for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
