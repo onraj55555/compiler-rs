@@ -8,5 +8,5 @@ fn main() {
     println!("{:?}", lexer);
 
     let mut parser = Parser::new(lexer.get_tokens());
-    parser.parse();
+    println!("{:#?}", parser);
 }
