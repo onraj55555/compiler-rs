@@ -1,51 +1,116 @@
+#[derive(Debug)]
 pub struct Program {
-    declarations: Vec<Declaration>,
+    pub declarations: Vec<Declaration>,
 }
 
+impl Program {
+    pub fn new(declarations: Vec<Declaration>) -> Self {
+        Self { declarations }
+    }
+}
+
+#[derive(Debug)]
 pub enum Declaration {
     FunctionDeclaration(FunctionDeclaration),
 }
 
+#[derive(Debug)]
 pub struct FunctionDeclaration {
-    name: String,
-    parameters: Vec<FunctionParameterDeclaration>,
-    body: Vec<Statement>,
+    pub name: String,
+    pub parameters: Vec<FunctionParameterDeclaration>,
+    pub return_type: Type,
+    pub body: Vec<Statement>,
 }
 
+impl FunctionDeclaration {
+    pub fn new(
+        name: String,
+        parameters: Vec<FunctionParameterDeclaration>,
+        return_type: Type,
+        body: Vec<Statement>,
+    ) -> Self {
+        Self {
+            name,
+            parameters,
+            return_type,
+            body,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct FunctionParameterDeclaration {
-    name: String,
-    datatype: Type,
+    pub name: String,
+    pub datatype: Type,
 }
 
+impl FunctionParameterDeclaration {
+    pub fn new(name: String, datatype: Type) -> Self {
+        Self { name, datatype }
+    }
+}
+
+#[derive(Debug)]
 pub enum Statement {
     DeclarationStatement(DeclarationStatement),
     VariableAssignmentStatement(VariableAssignmentStatement),
     IfStatement(IfStatement),
     WhileStatement(WhileStatement),
-    ReturnStatement(Expression),
+    ReturnStatement(Option<Expression>),
     Expression(Expression),
 }
 
+#[derive(Debug)]
 pub struct WhileStatement {
-    condition: Expression,
-    body: Vec<Statement>,
+    pub condition: Expression,
+    pub body: Vec<Statement>,
+}
+
+impl WhileStatement {
+    pub fn new(condition: Expression, body: Vec<Statement>) -> Self {
+        Self { condition, body }
+    }
 }
 
 // if condition is None -> else statement
+#[derive(Debug)]
 pub struct IfStatement {
-    condition: Option<Expression>,
-    body: Vec<Statement>,
-    tail_conditions: Option<Box<IfStatement>>,
+    pub condition: Option<Expression>,
+    pub body: Vec<Statement>,
+    pub tail_conditions: Option<Box<IfStatement>>,
 }
 
+impl IfStatement {
+    pub fn new(condition: Expression, body: Vec<Statement>, tail: Option<IfStatement>) -> Self {
+        let tail = match tail {
+            Some(tail) => Some(Box::new(tail)),
+            None => None,
+        };
+        Self {
+            condition: Some(condition),
+            body,
+            tail_conditions: tail,
+        }
+    }
+
+    pub fn make_else(body: Vec<Statement>) -> Self {
+        Self {
+            condition: None,
+            body,
+            tail_conditions: None,
+        }
+    }
+}
+
+#[derive(Debug)]
 pub struct DeclarationStatement {
-    variable: String,
-    datatype: Type,
-    value: Expression,
+    pub variable: String,
+    pub datatype: Type,
+    pub value: Expression,
 }
 
 impl DeclarationStatement {
-    fn new(variable: String, datatype: Type, value: Expression) -> Self {
+    pub fn new(variable: String, datatype: Type, value: Expression) -> Self {
         Self {
             variable,
             datatype,
@@ -54,15 +119,24 @@ impl DeclarationStatement {
     }
 }
 
+#[derive(Debug)]
 pub struct VariableAssignmentStatement {
-    variable: String,
-    value: Expression,
+    pub variable: String,
+    pub value: Expression,
 }
 
+impl VariableAssignmentStatement {
+    pub fn new(variable: String, value: Expression) -> Self {
+        Self { variable, value }
+    }
+}
+
+#[derive(Debug)]
 pub enum Type {
     SimpleType(SimpleType),
 }
 
+#[derive(Debug)]
 pub enum SimpleType {
     I8,
     I16,
@@ -75,6 +149,7 @@ pub enum SimpleType {
     Void,
 }
 
+#[derive(Debug)]
 pub enum Expression {
     BinOpExpression(BinOpExpression),
     LiteralExpression(LiteralExpression),
@@ -82,12 +157,14 @@ pub enum Expression {
     FunctionCallExpression(FunctionCallExpression),
 }
 
+#[derive(Debug)]
 pub struct BinOpExpression {
-    left: Box<Expression>,
-    op: Operator,
-    right: Box<Expression>,
+    pub left: Box<Expression>,
+    pub op: Operator,
+    pub right: Box<Expression>,
 }
 
+#[derive(Debug)]
 pub enum Operator {
     Plus,
     Min,
@@ -96,11 +173,42 @@ pub enum Operator {
     Mod,
 }
 
-pub struct FunctionCallExpression {
-    name: String,
-    parameters: Vec<Expression>,
+impl BinOpExpression {
+    pub fn new(left: Expression, right: Expression, op: Operator) -> Self {
+        Self {
+            left: Box::new(left),
+            op,
+            right: Box::new(right),
+        }
+    }
 }
 
+#[derive(Debug)]
+pub struct FunctionCallExpression {
+    pub name: String,
+    pub parameters: Vec<Expression>,
+}
+
+impl FunctionCallExpression {
+    pub fn new(name: String) -> Self {
+        Self {
+            name,
+            parameters: Vec::new(),
+        }
+    }
+
+    pub fn add_parameter(&mut self, parameter: Expression) {
+        self.parameters.push(parameter)
+    }
+
+    pub fn add_parameters(&mut self, parameters: Vec<Expression>) {
+        for parameter in parameters {
+            self.add_parameter(parameter);
+        }
+    }
+}
+
+#[derive(Debug)]
 pub enum LiteralExpression {
     I8(String),
     I16(String),
