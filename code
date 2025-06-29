@@ -1,3 +1,8 @@
-fn main(a: u32) -> u32 {
-	return 1 + 2;
+fn print_int(a: u64) -> void {
+	
+}
+
+fn main(a: u64) -> u64 {
+	print_int(a);
+	return a + 1;
 }
